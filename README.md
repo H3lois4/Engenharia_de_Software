@@ -71,9 +71,9 @@ O Módulo 6 foi dividido em três microsserviços independentes, um por integran
 
 | Repositório | Responsabilidade | Responsável |
 |-------------|------------------|-------------|
-| `ms-dashboard` | Portal web central (frontend) e BFF que agrega as métricas dos demais módulos | `<Integrante 2>` |
-| **`ms-notifications`** | **Recebe eventos de toda a plataforma, prioriza com IA e entrega alertas em tempo real** | **`<Seu nome>` (PO)** |
-| `ms-chat` | Chat interativo em tempo real entre membros da equipe | `<Integrante 3>` |
+| `ms-dashboard` | Portal web central (frontend) e BFF que agrega as métricas dos demais módulos | Gabriela Cardoso (SM) |
+| **`ms-notifications`** | **Recebe eventos de toda a plataforma, prioriza com IA e entrega alertas em tempo real** | **Heloisa Matheus (PO)** |
+| `ms-chat` | Chat interativo em tempo real entre membros da equipe | Daniel Dias Reis |
 
 Os três serviços compartilham o mesmo contrato de autenticação (JWT emitido pelo Módulo 1) e o mesmo barramento de eventos da turma. O `ms-dashboard` é o principal consumidor deste serviço: ele exibe o sino de notificações, o feed e os toasts em tempo real.
 
@@ -629,15 +629,15 @@ curl -X POST http://localhost:8006/api/v1/events \
 | `REDIS_URL` | `redis://redis:6379/0` | Conexão Redis |
 | `BROKER_URL` | `amqp://guest:guest@broker:5672/` | Conexão com o barramento |
 | `BROKER_EXCHANGE` | `platform.events` | Exchange compartilhada da turma |
-| `AUTH_JWKS_URL` | `https//<modulo1>/.well-known/jwks.json` | Chaves públicas do Módulo 1 |
-| `AUTH_MEMBERS_URL` | `https//<modulo1>/api/v1/projects` | Consulta de membros e papéis |
+| `AUTH_JWKS_URL` | `https://<modulo1>/.well-known/jwks.json` | Chaves públicas do Módulo 1 |
+| `AUTH_MEMBERS_URL` | `https://<modulo1>/api/v1/projects` | Consulta de membros e papéis |
 | `SERVICE_TOKENS` | `mod2:xxx,mod4:yyy` | Tokens aceitos na ingestão HTTP |
 | `LLM_PROVIDER` | `anthropic` | Provedor de IA |
 | `LLM_MODEL` | `<modelo>` | Modelo utilizado |
 | `LLM_API_KEY` | — | Chave da API (nunca commitar) |
 | `LLM_TIMEOUT_SECONDS` | `3` | Timeout da priorização por IA |
 | `AI_ENABLED` | `true` | Liga/desliga a camada de IA |
-| `CORS_ORIGINS` | `https//<dashboard>` | Origens permitidas |
+| `CORS_ORIGINS` | `https://<dashboard>` | Origens permitidas |
 | `LOG_LEVEL` | `INFO` | Nível de log |
 
 ---
@@ -742,7 +742,7 @@ Regras da branch `main`:
 ---
 ## 📋 Backlog e User Stories
 
-O backlog vivo está no **GitHub Projects** do grupo: `<link do quadro>`. Esta seção resume os épicos e as histórias priorizadas pelo PO.
+O backlog vivo está no **GitHub Projects** do grupo: _(link a definir)_. Esta seção resume os épicos e as histórias priorizadas pelo PO.
 
 ### Épicos
 
@@ -939,14 +939,14 @@ main  <── PR ── feature/NTF-05-websocket
 
 | Integrante | Papel no Scrum | Microsserviço | GitHub |
 |------------|----------------|---------------|--------|
-| `<Seu nome>` | Product Owner + Dev | `ms-notifications` | `@<usuario>` |
-| `<Integrante 2>` | Scrum Master + Dev | `ms-dashboard` | `@<usuario>` |
-| `<Integrante 3>` | Dev | `ms-chat` | `@<usuario>` |
+| Heloisa Matheus | Product Owner + Dev | `ms-notifications` | [@H3lois4](https://github.com/H3lois4) |
+| Gabriela Cardoso | Scrum Master + Dev | `ms-dashboard` | [@gabicds13](https://github.com/gabicds13) |
+| Daniel Dias Reis | Dev | `ms-chat` | _(a definir)_ |
 
 ### Repositórios relacionados
 
-- Módulo 6: [`ms-dashboard`](https://github.com/<org>/ms-dashboard) · [`ms-chat`](https://github.com/<org>/ms-chat)
-- Demais módulos da turma: `<links a preencher>`
+- Módulo 6: `ms-dashboard` · `ms-chat` _(links a definir)_
+- Demais módulos da turma: _(links a definir)_
 
 ---
 
