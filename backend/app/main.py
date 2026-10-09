@@ -37,6 +37,10 @@ def create_app() -> FastAPI:
 
     app.include_router(health_router)
 
+    from app.dashboard.router import router as dashboard_router
+
+    app.include_router(dashboard_router)
+
     if settings.is_dev:
         from app.api.dev import router as dev_router
 
