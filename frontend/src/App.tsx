@@ -5,16 +5,18 @@ import { Navbar } from "./components/Navbar";
 import { ChatPage } from "./features/chat/ChatPage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
 import { NotificationsPage } from "./features/notifications/NotificationsPage";
+import {
+  NotificationsProvider,
+  useNotifications,
+} from "./features/notifications/NotificationsContext";
+import { Toasts } from "./features/notifications/Toasts";
 import { ThemeProvider } from "./theme/ThemeProvider";
 
-function Shell() {
-  const { user } = useAuth();
-
-  if (!user) return <LoginScreen />;
-
+function ShellContent() {
+  const { unreadTotal } = useNotifications();
   return (
     <div className="min-h-full bg-bg text-text">
-      <Navbar />
+      <Navbar unreadBadge={unreadTotal} />
       <main className="mx-auto max-w-6xl p-6">
         <Routes>
           <Route path="/dashboard" element={<DashboardPage />} />
@@ -23,7 +25,18 @@ function Shell() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
+      <Toasts />
     </div>
+  );
+}
+
+function Shell() {
+  const { user } = useAuth();
+  if (!user) return <LoginScreen />;
+  return (
+    <NotificationsProvider>
+      <ShellContent />
+    </NotificationsProvider>
   );
 }
 
