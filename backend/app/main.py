@@ -41,9 +41,14 @@ def create_app() -> FastAPI:
     from app.notifications.router import router as notifications_router
     from app.notifications.router import ws_router as notifications_ws_router
 
+    from app.chat.router import router as chat_router
+    from app.chat.router import ws_router as chat_ws_router
+
     app.include_router(dashboard_router)
     app.include_router(notifications_router)
     app.include_router(notifications_ws_router)
+    app.include_router(chat_router)
+    app.include_router(chat_ws_router)
 
     if settings.is_dev:
         from app.api.dev import router as dev_router
