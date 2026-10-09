@@ -1,0 +1,27 @@
+# ms-dashboard (Módulo 6) — sobe portal (front-end) e BFF com um comando.
+# Em USE_MOCKS=true, o BFF simula os serviços downstream, permitindo demonstrar
+# o portal ponta a ponta sem os outros grupos no ar.
+services:
+  bff:
+    build: ./backend
+    environment:
+      APP_ENV: development
+      PORT: 8006
+      USE_MOCKS: "true"
+      JWT_SECRET: dev-secret-change-me
+      CORS_ORIGINS: http://localhost:8080
+      LOG_LEVEL: INFO
+    ports:
+      - "8006:8006"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8006/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - bff
+    ports:
+      - "8080:80"
