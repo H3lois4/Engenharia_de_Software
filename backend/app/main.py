@@ -37,6 +37,11 @@ def create_app() -> FastAPI:
 
     app.include_router(health_router)
 
+    if settings.is_dev:
+        from app.api.dev import router as dev_router
+
+        app.include_router(dev_router)
+
     @app.get("/", tags=["meta"])
     async def root() -> dict[str, str]:
         return {"service": settings.app_name, "status": "ok"}
