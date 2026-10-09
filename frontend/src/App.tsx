@@ -1,18 +1,40 @@
-// Esqueleto do portal (tarefa 1). As telas e a navegação chegam nas tarefas 9–12.
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AuthProvider, useAuth } from "./auth/AuthContext";
+import { LoginScreen } from "./auth/LoginScreen";
+import { Navbar } from "./components/Navbar";
+import { ChatPage } from "./features/chat/ChatPage";
+import { DashboardPage } from "./features/dashboard/DashboardPage";
+import { NotificationsPage } from "./features/notifications/NotificationsPage";
+import { ThemeProvider } from "./theme/ThemeProvider";
+
+function Shell() {
+  const { user } = useAuth();
+
+  if (!user) return <LoginScreen />;
+
+  return (
+    <div className="min-h-full bg-bg text-text">
+      <Navbar />
+      <main className="mx-auto max-w-6xl p-6">
+        <Routes>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/notificacoes" element={<NotificationsPage />} />
+          <Route path="/chat" element={<ChatPage />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}
+
 export default function App() {
   return (
-    <main className="min-h-full bg-bg text-text font-sans">
-      <header className="bg-primary px-6 py-4">
-        <h1 className="text-2xl font-semibold text-white">
-          Módulo 6 · Portal
-        </h1>
-      </header>
-      <section className="p-6">
-        <p className="text-text-muted">
-          Esqueleto inicial do ms-dashboard. Dashboard, Notificações e Chat
-          serão adicionados nas próximas tarefas.
-        </p>
-      </section>
-    </main>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Shell />
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
