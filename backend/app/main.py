@@ -38,8 +38,12 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
 
     from app.dashboard.router import router as dashboard_router
+    from app.notifications.router import router as notifications_router
+    from app.notifications.router import ws_router as notifications_ws_router
 
     app.include_router(dashboard_router)
+    app.include_router(notifications_router)
+    app.include_router(notifications_ws_router)
 
     if settings.is_dev:
         from app.api.dev import router as dev_router
