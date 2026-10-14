@@ -43,3 +43,6 @@ Thumbs.db
 
 # Docker
 docker-compose.override.yml
+
+# Kiro (specs e steering locais — não publicar no GitHub)
+.kiro/
