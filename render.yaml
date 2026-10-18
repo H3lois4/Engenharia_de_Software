@@ -7,18 +7,14 @@
 # Como usar:
 #   1. Suba o repositório no GitHub (já está).
 #   2. No Render: New > Blueprint > conecte este repositório.
-#   3. O Render pede o valor das variáveis marcadas com `sync: false`:
-#        - CORS_ORIGINS (no BFF): a URL pública do PORTAL, ex.:
-#            https://ms-dashboard-web.onrender.com
-#        - VITE_API_BASE_URL (no portal): a URL pública do BFF, ex.:
-#            https://ms-dashboard-bff.onrender.com
-#      Dica: crie o Blueprint uma vez para o Render gerar as URLs .onrender.com,
-#      depois preencha cada variável com a URL do OUTRO serviço e salve. O portal
-#      é reconstruído com a URL correta do BFF.
+#   3. As URLs públicas dos dois serviços já estão fixadas abaixo (os nomes geram
+#      URLs previsíveis: https://<nome>.onrender.com). Se você renomear um serviço,
+#      ajuste CORS_ORIGINS e VITE_API_BASE_URL de acordo.
 #
-# Observação: no Render, `fromService ... property: host` devolve o host da REDE
-# PRIVADA (interno, sem https://). Como o navegador acessa o BFF pela internet e o
-# CORS precisa da origem pública, preenchemos essas duas URLs manualmente.
+# Importante: VITE_API_BASE_URL é lida em tempo de BUILD do front (o Vite "assa" a
+# URL no JavaScript). O Render repassa as env vars de um serviço Docker como build
+# args, então deixá-la fixa aqui garante que o portal seja construído já apontando
+# para o BFF. Alterar essa variável exige rebuild do portal (não só restart).
 services:
   - type: web
     name: ms-dashboard-bff
@@ -40,7 +36,7 @@ services:
         value: "true" # permite o login de demonstração (PO/PM/Dev) sem o Módulo 1.
         # DESLIGUE (false) quando a autenticação real do Módulo 1 estiver integrada.
       - key: CORS_ORIGINS
-        sync: false # preencher com a URL pública do PORTAL (ms-dashboard-web)
+        value: https://ms-dashboard-web.onrender.com # URL pública do portal
       # URLs dos serviços downstream (preencher quando os grupos publicarem):
       # - key: NOTIFICATIONS_URL
       #   value: https://ms-notifications-xxxx.onrender.com
@@ -59,4 +55,4 @@ services:
     dockerContext: ./frontend
     envVars:
       - key: VITE_API_BASE_URL
-        sync: false # preencher com a URL pública do BFF (ms-dashboard-bff)
+        value: https://ms-dashboard-bff.onrender.com # URL pública do BFF (build-time)
