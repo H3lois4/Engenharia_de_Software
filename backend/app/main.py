@@ -50,7 +50,7 @@ def create_app() -> FastAPI:
     app.include_router(chat_router)
     app.include_router(chat_ws_router)
 
-    if settings.is_dev:
+    if settings.dev_login_enabled:
         from app.api.dev import router as dev_router
 
         app.include_router(dev_router)

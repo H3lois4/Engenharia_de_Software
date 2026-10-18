@@ -36,6 +36,9 @@ services:
         value: INFO
       - key: JWT_SECRET
         generateValue: true # o Render gera um segredo forte automaticamente
+      - key: ENABLE_DEV_LOGIN
+        value: "true" # permite o login de demonstração (PO/PM/Dev) sem o Módulo 1.
+        # DESLIGUE (false) quando a autenticação real do Módulo 1 estiver integrada.
       - key: CORS_ORIGINS
         sync: false # preencher com a URL pública do PORTAL (ms-dashboard-web)
       # URLs dos serviços downstream (preencher quando os grupos publicarem):

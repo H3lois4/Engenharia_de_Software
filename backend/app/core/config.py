@@ -36,6 +36,12 @@ class Settings(BaseSettings):
     jwt_issuer: str | None = None
     jwt_audience: str | None = None
 
+    # Login de desenvolvimento (gera tokens de PO/PM/Dev sem senha).
+    # Em development fica sempre ligado. Em produção, só quando esta flag é "true"
+    # — útil para demonstrar o portal enquanto o Módulo 1 (auth real) não existe.
+    # DESLIGUE quando a autenticação real estiver integrada.
+    enable_dev_login: bool = False
+
     # URLs dos serviços downstream (usadas quando use_mocks=false)
     notifications_url: str = "http://ms-notifications:8000"
     chat_url: str = "http://ms-chat:8000"
@@ -58,6 +64,11 @@ class Settings(BaseSettings):
     @property
     def is_dev(self) -> bool:
         return self.app_env == "development"
+
+    @property
+    def dev_login_enabled(self) -> bool:
+        """Dev-login disponível em development ou quando habilitado explicitamente."""
+        return self.is_dev or self.enable_dev_login
 
 
 @lru_cache

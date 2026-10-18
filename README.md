@@ -88,8 +88,13 @@ O Vite encaminha `/api` e `/ws` para o BFF em `localhost:8006` (ver `vite.config
 ### Login de desenvolvimento
 
 Sem o Módulo 1 no ar, use o login de desenvolvimento na tela inicial (Product Owner, Scrum
-Master ou Desenvolvedor). Os tokens de teste vêm de `GET /api/bff/dev/tokens` (habilitado apenas
-quando `APP_ENV=development`).
+Master ou Desenvolvedor). Os tokens de teste vêm de `GET /api/bff/dev/tokens`, disponível quando
+`APP_ENV=development` **ou** quando `ENABLE_DEV_LOGIN=true`.
+
+> **Produção/demonstração:** como o Módulo 1 (autenticação real) ainda não existe, o deploy liga
+> `ENABLE_DEV_LOGIN=true` para permitir a demonstração. Esse login gera tokens de qualquer perfil
+> **sem senha** — portanto **desligue-o** (`ENABLE_DEV_LOGIN=false`) assim que a autenticação real
+> estiver integrada.
 
 ## Deploy na nuvem (Render, via Docker)
 
