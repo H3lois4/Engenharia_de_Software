@@ -1,5 +1,7 @@
 // Cliente REST do BFF. Injeta o JWT em Authorization e trata 401 de forma central.
 
+import { apiUrl } from "./config";
+
 const TOKEN_KEY = "ms-dashboard.token";
 
 let onUnauthorized: (() => void) | null = null;
@@ -33,7 +35,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
-  const res = await fetch(path, { ...init, headers });
+  const res = await fetch(apiUrl(path), { ...init, headers });
 
   if (res.status === 401) {
     setToken(null);

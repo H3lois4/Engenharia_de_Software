@@ -1,0 +1,59 @@
+# Blueprint de deploy no Render (https://render.com) — Módulo 6 / ms-dashboard.
+#
+# Sobe dois serviços web a partir dos Dockerfiles do repositório:
+#   - ms-dashboard-bff  : BFF FastAPI
+#   - ms-dashboard-web  : portal React servido por nginx
+#
+# Como usar:
+#   1. Suba o repositório no GitHub (já está).
+#   2. No Render: New > Blueprint > conecte este repositório.
+#   3. O Render pede o valor das variáveis marcadas com `sync: false`:
+#        - CORS_ORIGINS (no BFF): a URL pública do PORTAL, ex.:
+#            https://ms-dashboard-web.onrender.com
+#        - VITE_API_BASE_URL (no portal): a URL pública do BFF, ex.:
+#            https://ms-dashboard-bff.onrender.com
+#      Dica: crie o Blueprint uma vez para o Render gerar as URLs .onrender.com,
+#      depois preencha cada variável com a URL do OUTRO serviço e salve. O portal
+#      é reconstruído com a URL correta do BFF.
+#
+# Observação: no Render, `fromService ... property: host` devolve o host da REDE
+# PRIVADA (interno, sem https://). Como o navegador acessa o BFF pela internet e o
+# CORS precisa da origem pública, preenchemos essas duas URLs manualmente.
+services:
+  - type: web
+    name: ms-dashboard-bff
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: USE_MOCKS
+        value: "true" # troque para "false" quando os outros módulos estiverem no ar
+      - key: LOG_LEVEL
+        value: INFO
+      - key: JWT_SECRET
+        generateValue: true # o Render gera um segredo forte automaticamente
+      - key: CORS_ORIGINS
+        sync: false # preencher com a URL pública do PORTAL (ms-dashboard-web)
+      # URLs dos serviços downstream (preencher quando os grupos publicarem):
+      # - key: NOTIFICATIONS_URL
+      #   value: https://ms-notifications-xxxx.onrender.com
+      # - key: CHAT_URL
+      #   value: https://ms-chat-xxxx.onrender.com
+      # - key: BACKLOG_URL
+      #   value: https://modulo-1-xxxx.onrender.com
+      # - key: GITHUB_URL
+      #   value: https://modulo-2-xxxx.onrender.com
+
+  - type: web
+    name: ms-dashboard-web
+    runtime: docker
+    plan: free
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false # preencher com a URL pública do BFF (ms-dashboard-bff)

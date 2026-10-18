@@ -91,6 +91,52 @@ Sem o Módulo 1 no ar, use o login de desenvolvimento na tela inicial (Product O
 Master ou Desenvolvedor). Os tokens de teste vêm de `GET /api/bff/dev/tokens` (habilitado apenas
 quando `APP_ENV=development`).
 
+## Deploy na nuvem (Render, via Docker)
+
+Cada serviço do Módulo 6 roda como um contêiner independente com uma URL pública, para que os
+módulos da plataforma se integrem consumindo as APIs uns dos outros. O deploy usa o
+[`render.yaml`](render.yaml) (Blueprint do [Render](https://render.com)), que cria **dois
+serviços web Docker**: `ms-dashboard-bff` (BFF) e `ms-dashboard-web` (portal). O Render constrói
+as imagens na nuvem a partir dos `Dockerfile` do repositório — não é preciso ter Docker na sua
+máquina para o deploy (só para testar localmente).
+
+### Passo a passo
+
+1. Garanta que o repositório está no GitHub (branch `main`).
+2. No Render: **New ▸ Blueprint** e conecte este repositório. O Render lê o `render.yaml` e
+   propõe os dois serviços.
+3. O Render pede o valor das variáveis marcadas como `sync: false`. Na primeira criação, deixe-as
+   em branco (ou um valor provisório) para o Render gerar as URLs `*.onrender.com`.
+4. Com as URLs geradas, preencha cada uma com a URL do **outro** serviço e salve:
+   - no `ms-dashboard-bff`, `CORS_ORIGINS` = URL pública do portal
+     (ex.: `https://ms-dashboard-web.onrender.com`);
+   - no `ms-dashboard-web`, `VITE_API_BASE_URL` = URL pública do BFF
+     (ex.: `https://ms-dashboard-bff.onrender.com`).
+5. O portal é reconstruído com a URL correta do BFF. Abra a URL do `ms-dashboard-web` e use o
+   login de desenvolvimento.
+
+> **Por que preencher as URLs manualmente?** No Render, o auto-wiring `fromService ... property:
+> host` devolve o host da **rede privada** (interno e sem `https://`). Como o navegador acessa o
+> BFF pela internet e o CORS precisa da origem pública, essas duas URLs são informadas à mão.
+
+### Integração com os outros módulos
+
+Enquanto `ms-notifications`, `ms-chat` e os Módulos 1 e 2 não estão publicados, o BFF roda com
+`USE_MOCKS=true` e o portal funciona sozinho com dados simulados. Quando os colegas publicarem os
+serviços, troque no `ms-dashboard-bff`:
+
+- `USE_MOCKS=false`;
+- `NOTIFICATIONS_URL`, `CHAT_URL`, `BACKLOG_URL`, `GITHUB_URL` com as URLs reais.
+
+Nenhuma mudança de código é necessária — só variáveis de ambiente.
+
+### Outros provedores
+
+O mesmo par de `Dockerfile` roda em Railway, Fly.io, uma VPS ou qualquer host que aceite Docker.
+Basta expor o BFF e o portal, e configurar `VITE_API_BASE_URL` (build do portal) e `CORS_ORIGINS`
+(BFF) com as URLs públicas correspondentes. Lembre que o portal (nginx) escuta na porta `PORT`
+(o Render define automaticamente; o padrão da imagem é 80).
+
 ## Variáveis de ambiente
 
 Copie `backend/.env.example` para `backend/.env` e ajuste se necessário.
@@ -110,6 +156,10 @@ Copie `backend/.env.example` para `backend/.env` e ajuste se necessário.
 | `UPSTREAM_TIMEOUT_SECONDS` | `3.0` | Timeout das chamadas externas |
 | `CIRCUIT_BREAKER_FAILS` | `5` | Falhas para abrir o circuit breaker |
 | `CACHE_TTL_SECONDS` | `30.0` | TTL do cache da última resposta válida |
+
+**Front-end (tempo de build):** `VITE_API_BASE_URL` define a URL pública do BFF usada pelo
+portal. Vazio (padrão) = caminhos relativos (`/api`, `/ws`), usados em dev e no docker-compose.
+Na nuvem, informe a URL completa do BFF (ex.: `https://ms-dashboard-bff.onrender.com`).
 
 ## API do BFF
 

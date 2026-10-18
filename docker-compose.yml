@@ -1,6 +1,11 @@
-# ms-dashboard (Módulo 6) — sobe portal (front-end) e BFF com um comando.
-# Em USE_MOCKS=true, o BFF simula os serviços downstream, permitindo demonstrar
-# o portal ponta a ponta sem os outros grupos no ar.
+# ms-dashboard (Módulo 6) — ambiente LOCAL: sobe portal + BFF com um comando.
+#
+#   docker compose up --build
+#   -> portal em http://localhost:8080   | BFF em http://localhost:8006
+#
+# Aqui o portal usa caminhos relativos (/api, /ws) e o nginx encaminha ao serviço
+# "bff" na rede do compose, então VITE_API_BASE_URL fica vazio.
+# Para o deploy na nuvem, veja render.yaml e o README.
 services:
   bff:
     build: ./backend
@@ -13,6 +18,7 @@ services:
       LOG_LEVEL: INFO
     ports:
       - "8006:8006"
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8006/health')"]
       interval: 10s
@@ -20,8 +26,14 @@ services:
       retries: 5
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: "" # vazio => caminhos relativos (nginx faz proxy ao bff)
+    environment:
+      PORT: 80
     depends_on:
       - bff
     ports:
       - "8080:80"
+    restart: unless-stopped

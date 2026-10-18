@@ -3,11 +3,11 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Dependências primeiro (cache de camada)
+# Copiamos o projeto e o pacote antes de instalar: o pyproject declara
+# packages = ["app"], então o diretório app/ precisa existir no momento do build.
 COPY pyproject.toml ./
-RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir .
-
 COPY app ./app
+RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir .
 
 ENV PORT=8006
 EXPOSE 8006

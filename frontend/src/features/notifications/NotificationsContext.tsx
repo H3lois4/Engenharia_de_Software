@@ -11,6 +11,7 @@ import {
 import { useAuth } from "../../auth/AuthContext";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { api, getToken } from "../../lib/apiClient";
+import { wsUrl } from "../../lib/config";
 import type {
   ListResult,
   Notification,
@@ -89,8 +90,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const wsUrl = user && getToken() ? `/ws/notifications?token=${getToken()}` : null;
-  const status = useWebSocket(wsUrl, { onMessage, onReconnect: refresh, enabled: !!user });
+  const socketUrl =
+    user && getToken() ? wsUrl(`/ws/notifications?token=${getToken()}`) : null;
+  const status = useWebSocket(socketUrl, { onMessage, onReconnect: refresh, enabled: !!user });
 
   useEffect(() => {
     if (user) void refresh();

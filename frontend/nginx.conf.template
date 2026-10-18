@@ -1,5 +1,7 @@
+# Template processado na inicialização do container (envsubst substitui ${PORT}).
+# Render define PORT (padrão 10000). No docker-compose local usamos PORT=80.
 server {
-    listen 80;
+    listen ${PORT};
     server_name _;
     root /usr/share/nginx/html;
     index index.html;
@@ -9,14 +11,15 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    # REST do BFF
+    # Proxy opcional para o BFF — usado no docker-compose local (serviço "bff").
+    # Na nuvem, o portal fala direto com a URL pública do BFF (VITE_API_BASE_URL),
+    # então estes blocos não são exercitados lá.
     location /api/ {
         proxy_pass http://bff:8006;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
 
-    # WebSocket do BFF
     location /ws/ {
         proxy_pass http://bff:8006;
         proxy_http_version 1.1;

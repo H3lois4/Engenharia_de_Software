@@ -3,6 +3,7 @@ import { useAuth } from "../../auth/AuthContext";
 import { UnavailableState } from "../../components/UnavailableState";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { api, ApiError, getToken } from "../../lib/apiClient";
+import { wsUrl } from "../../lib/config";
 import type { ChatHistoryResult, ChatMessage } from "../../lib/types";
 
 export function ChatPage() {
@@ -42,11 +43,11 @@ export function ChatPage() {
     }
   }, []);
 
-  const wsUrl =
+  const socketUrl =
     projectId && getToken()
-      ? `/ws/chat?project_id=${encodeURIComponent(projectId)}&token=${getToken()}`
+      ? wsUrl(`/ws/chat?project_id=${encodeURIComponent(projectId)}&token=${getToken()}`)
       : null;
-  const status = useWebSocket(wsUrl, { onMessage, onReconnect: loadHistory, enabled: !!projectId });
+  const status = useWebSocket(socketUrl, { onMessage, onReconnect: loadHistory, enabled: !!projectId });
 
   useEffect(() => {
     void loadHistory();
