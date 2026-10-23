@@ -1,4 +1,5 @@
 """Client do Módulo 1 (Auth/Backlog): User Stories e reviews pendentes."""
+
 from __future__ import annotations
 
 from typing import Protocol

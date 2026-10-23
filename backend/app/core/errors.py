@@ -3,6 +3,7 @@
 Nenhuma resposta expõe stack trace. Todas seguem o formato:
     {"error": {"code": "...", "message": "...", "correlation_id": "..."}}
 """
+
 from __future__ import annotations
 
 import logging

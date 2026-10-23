@@ -1,7 +1,8 @@
 """Testes da rota de notificações (Requisitos 3.1, 3.5, 3.6)."""
+
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from jose import jwt
@@ -23,7 +24,7 @@ def _reset_singletons():
 
 def _token() -> str:
     s = get_settings()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return jwt.encode(
         {
             "sub": "user-1",
@@ -54,9 +55,7 @@ def test_list_returns_notifications(client):
 
 
 def test_list_filter_by_priority(client):
-    r = client.get(
-        "/api/bff/notifications", params={"priority": "critical"}, headers=_auth()
-    )
+    r = client.get("/api/bff/notifications", params={"priority": "critical"}, headers=_auth())
     assert r.status_code == 200
     items = r.json()["page"]["items"]
     assert all(n["priority"] == "critical" for n in items)

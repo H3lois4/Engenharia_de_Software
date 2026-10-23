@@ -2,6 +2,7 @@
 
 Montadas apenas quando APP_ENV=development.
 """
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends

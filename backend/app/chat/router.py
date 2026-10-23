@@ -2,6 +2,7 @@
 
 O acesso é restrito aos projetos presentes no token do usuário (Requisito 5.1).
 """
+
 from __future__ import annotations
 
 from typing import Literal
@@ -37,9 +38,7 @@ def _require_project(user: CurrentUser, project_id: str) -> None:
 
 
 @router.get("/rooms/{project_id}/messages", response_model=HistoryResult)
-async def history(
-    project_id: str, user: CurrentUser = Depends(get_current_user)
-) -> HistoryResult:
+async def history(project_id: str, user: CurrentUser = Depends(get_current_user)) -> HistoryResult:
     _require_project(user, project_id)
     client = get_chat_client()
     reg = get_registry()

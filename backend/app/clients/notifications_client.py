@@ -1,10 +1,12 @@
 """Client do ms-notifications: lista, contador, marcar lida e stream (WS)."""
+
 from __future__ import annotations
 
 import asyncio
 import itertools
-from datetime import datetime, timedelta, timezone
-from typing import AsyncIterator, Protocol
+from collections.abc import AsyncIterator
+from datetime import UTC, datetime, timedelta
+from typing import Protocol
 
 import httpx
 
@@ -38,7 +40,7 @@ class NotificationsClient(Protocol):
 
 # --- Exemplos determinísticos para a demo (um por origem, cobrindo prioridades) ---
 def _seed_notifications() -> list[Notification]:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     base = [
         dict(
             source=Source.CODE_REVIEW,
@@ -141,12 +143,10 @@ class MockNotificationsClient:
         for n in self._items:
             if n.id == notif_id and n.read_at is None:
                 idx = self._items.index(n)
-                self._items[idx] = n.model_copy(
-                    update={"read_at": datetime.now(timezone.utc)}
-                )
+                self._items[idx] = n.model_copy(update={"read_at": datetime.now(UTC)})
 
     async def mark_all_read(self, user: CurrentUser) -> None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         self._items = [
             n if n.read_at else n.model_copy(update={"read_at": now}) for n in self._items
         ]
@@ -155,7 +155,12 @@ class MockNotificationsClient:
         """Emite uma nova notificação periodicamente, para demonstrar o tempo real."""
         samples = [
             (Source.RELATORIOS, "report.generated", Priority.LOW, "Relatório de qualidade gerado"),
-            (Source.ARTEFATOS, "artifact.uploaded", Priority.MEDIUM, "Novo documento de requisitos"),
+            (
+                Source.ARTEFATOS,
+                "artifact.uploaded",
+                Priority.MEDIUM,
+                "Novo documento de requisitos",
+            ),
             (Source.CODE_REVIEW, "build.failed", Priority.CRITICAL, "Build quebrado em main"),
         ]
         cycle = itertools.cycle(samples)
@@ -174,7 +179,7 @@ class MockNotificationsClient:
                 title=title,
                 body="Notificação de exemplo emitida pelo mock.",
                 link="/projects/proj-123",
-                created_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
                 read_at=None,
             )
             self._items.append(n)
@@ -215,9 +220,7 @@ class HttpNotificationsClient:
 
     async def unread_count(self, user: CurrentUser) -> UnreadCount:
         async with httpx.AsyncClient(headers=downstream_headers(user)) as c:
-            r = raise_for_status(
-                await c.get(f"{self._base_url}/api/v1/notifications/unread-count")
-            )
+            r = raise_for_status(await c.get(f"{self._base_url}/api/v1/notifications/unread-count"))
             return UnreadCount.model_validate(r.json())
 
     async def mark_read(self, user: CurrentUser, notif_id: str) -> None:
@@ -231,9 +234,7 @@ class HttpNotificationsClient:
 
     async def mark_all_read(self, user: CurrentUser) -> None:
         async with httpx.AsyncClient(headers=downstream_headers(user)) as c:
-            raise_for_status(
-                await c.post(f"{self._base_url}/api/v1/notifications/read-all")
-            )
+            raise_for_status(await c.post(f"{self._base_url}/api/v1/notifications/read-all"))
 
     async def ws_source(self, user: CurrentUser) -> AsyncIterator[dict]:
         url = self._base_url.replace("http", "ws", 1) + "/ws/notifications"

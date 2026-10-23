@@ -4,10 +4,11 @@ O token é emitido pelo Módulo 1 (Auth). Aqui apenas validamos e extraímos as
 claims (user_id, role, project_ids). Em desenvolvimento, oferecemos uma rota que
 gera tokens de teste para os três perfis.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 
 from fastapi import Depends, WebSocket
@@ -109,7 +110,7 @@ def downstream_headers(user: CurrentUser) -> dict[str, str]:
 
 def issue_dev_token(role: Role, settings: Settings) -> str:
     """Gera um JWT de teste (apenas em desenvolvimento)."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     claims = {
         "sub": f"dev-{role.value.lower()}",
         "role": role.value,

@@ -3,11 +3,12 @@
 Isola o ponto de extensão para, no futuro, trocar o mock por um proxy real para
 ms-notifications/ms-chat sem tocar nas rotas.
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
-from typing import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable
 
 from fastapi import WebSocket, WebSocketDisconnect
 

@@ -3,6 +3,7 @@
 Os mocks são singletons por processo (mantêm estado de demo em memória: histórico
 de chat, notificações marcadas como lidas etc.).
 """
+
 from __future__ import annotations
 
 from functools import lru_cache
@@ -33,7 +34,9 @@ def get_github_client() -> GithubClient:
 @lru_cache
 def get_notifications_client() -> NotificationsClient:
     s = get_settings()
-    return MockNotificationsClient() if s.use_mocks else HttpNotificationsClient(s.notifications_url)
+    return (
+        MockNotificationsClient() if s.use_mocks else HttpNotificationsClient(s.notifications_url)
+    )
 
 
 @lru_cache

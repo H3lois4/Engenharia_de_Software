@@ -1,4 +1,5 @@
 """Tipos comuns dos clients upstream."""
+
 from __future__ import annotations
 
 import httpx

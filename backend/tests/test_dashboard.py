@@ -1,4 +1,5 @@
 """Testes do agregador do dashboard (Requisitos 4.1, 4.3, 4.4)."""
+
 from __future__ import annotations
 
 from app.clients.backlog_client import MockBacklogClient

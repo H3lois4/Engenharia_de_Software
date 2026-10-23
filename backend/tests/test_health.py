@@ -1,4 +1,5 @@
 """Testes dos health checks e do correlation id (Requisito 7.1, 7.2)."""
+
 from __future__ import annotations
 
 

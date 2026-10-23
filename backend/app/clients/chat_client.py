@@ -1,11 +1,13 @@
 """Client do ms-chat: histórico, envio e stream (WS) por projeto."""
+
 from __future__ import annotations
 
 import asyncio
 import itertools
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
-from typing import AsyncIterator, Protocol
+from collections.abc import AsyncIterator
+from datetime import UTC, datetime, timedelta
+from typing import Protocol
 
 import httpx
 
@@ -15,7 +17,9 @@ from app.domain.schemas import ChatMessage
 
 
 class ChatClient(Protocol):
-    async def history(self, user: CurrentUser, project_id: str, *, limit: int) -> list[ChatMessage]: ...
+    async def history(
+        self, user: CurrentUser, project_id: str, *, limit: int
+    ) -> list[ChatMessage]: ...
     async def post(self, user: CurrentUser, project_id: str, text: str) -> ChatMessage: ...
     def ws_source(self, user: CurrentUser, project_id: str) -> AsyncIterator[dict]: ...
 
@@ -30,7 +34,7 @@ class MockChatClient:
         self._seed()
 
     def _seed(self) -> None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         seed = [
             ("user-gabi", "Pessoal, subi o esqueleto do dashboard."),
             ("user-heloisa", "Boa! Já consigo consumir as notificações mockadas."),
@@ -47,7 +51,9 @@ class MockChatClient:
                 )
             )
 
-    async def history(self, user: CurrentUser, project_id: str, *, limit: int = 50) -> list[ChatMessage]:
+    async def history(
+        self, user: CurrentUser, project_id: str, *, limit: int = 50
+    ) -> list[ChatMessage]:
         msgs = self._messages.get(project_id, [])
         return msgs[-limit:]
 
@@ -57,7 +63,7 @@ class MockChatClient:
             project_id=project_id,
             author_id=user.user_id,
             content=text,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         self._messages[project_id].append(msg)
         for q in self._listeners[project_id]:
@@ -78,7 +84,9 @@ class HttpChatClient:
     def __init__(self, base_url: str):
         self._base_url = base_url.rstrip("/")
 
-    async def history(self, user: CurrentUser, project_id: str, *, limit: int = 50) -> list[ChatMessage]:
+    async def history(
+        self, user: CurrentUser, project_id: str, *, limit: int = 50
+    ) -> list[ChatMessage]:
         async with httpx.AsyncClient(headers=downstream_headers(user)) as c:
             r = raise_for_status(
                 await c.get(
@@ -101,7 +109,9 @@ class HttpChatClient:
             )
             return ChatMessage.model_validate(r.json())
 
-    async def ws_source(self, user: CurrentUser, project_id: str) -> AsyncIterator[dict]:  # pragma: no cover
+    async def ws_source(
+        self, user: CurrentUser, project_id: str
+    ) -> AsyncIterator[dict]:  # pragma: no cover
         url = self._base_url.replace("http", "ws", 1) + f"/ws/chat?project_id={project_id}"
         async with httpx.AsyncClient() as c:
             async with c.stream("GET", url, headers=downstream_headers(user)) as resp:

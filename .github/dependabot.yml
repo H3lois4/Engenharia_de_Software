@@ -1,0 +1,32 @@
+# Dependabot — verificação automática de dependências (atualizações e alertas).
+# Abre PRs quando há versões novas ou correções de segurança.
+version: 2
+updates:
+  # Dependências Python do BFF
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "backend"
+
+  # Dependências JavaScript do portal
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "frontend"
+
+  # As próprias GitHub Actions usadas no pipeline
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "ci"

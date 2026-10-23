@@ -1,4 +1,5 @@
 """Testes da camada de resiliência (Requisitos 6.1, 6.2)."""
+
 from __future__ import annotations
 
 import asyncio

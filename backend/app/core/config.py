@@ -1,4 +1,5 @@
 """Configuração central do BFF, carregada de variáveis de ambiente."""
+
 from __future__ import annotations
 
 from functools import lru_cache

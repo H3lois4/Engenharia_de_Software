@@ -1,4 +1,5 @@
 """Testes dos clients mock (Requisitos 4.2, 3.1, 3.5, 5.2, 5.3)."""
+
 from __future__ import annotations
 
 from app.clients.backlog_client import MockBacklogClient
@@ -49,7 +50,9 @@ async def test_notifications_unread_and_mark_read():
     before = await c.unread_count(USER)
     assert before.total == 4
 
-    first = (await c.list(USER, cursor=None, priority=None, source=None, status=None, limit=1)).items[0]
+    first = (
+        await c.list(USER, cursor=None, priority=None, source=None, status=None, limit=1)
+    ).items[0]
     await c.mark_read(USER, first.id)
     after = await c.unread_count(USER)
     assert after.total == 3

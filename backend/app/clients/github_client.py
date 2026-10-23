@@ -1,4 +1,5 @@
 """Client do Módulo 2 (GitHub): commits/PRs por semana e PRs abertos."""
+
 from __future__ import annotations
 
 from typing import Protocol

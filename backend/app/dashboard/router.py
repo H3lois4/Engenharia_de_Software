@@ -1,4 +1,5 @@
 """Rota do dashboard: agrega métricas dos Módulos 1 e 2."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query

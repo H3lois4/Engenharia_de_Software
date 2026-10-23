@@ -4,6 +4,7 @@ Cada card é montado de forma independente através do `guarded_call`: a falha d
 serviço de origem deixa apenas aquele card como `unavailable`, sem afetar os demais
 (degradação graciosa — Requisito 4.3/4.4).
 """
+
 from __future__ import annotations
 
 from app.clients.backlog_client import BacklogClient

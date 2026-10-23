@@ -1,4 +1,5 @@
 """Rotas de notificações: proxy REST + WebSocket bridge para o ms-notifications."""
+
 from __future__ import annotations
 
 from typing import Literal

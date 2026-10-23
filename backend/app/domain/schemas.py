@@ -1,4 +1,5 @@
 """Schemas de domínio compartilhados (Pydantic v2)."""
+
 from __future__ import annotations
 
 from datetime import datetime

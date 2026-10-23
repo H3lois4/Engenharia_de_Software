@@ -12,13 +12,15 @@ Em falha (erro, timeout ou breaker aberto), devolve o valor em cache marcado com
 Assim, a falha de um serviço de terceiros NUNCA vira um erro de página — vira um
 estado parcial que o front-end traduz em "indisponível no momento".
 """
+
 from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Awaitable, Callable, Generic, TypeVar
+from typing import Generic, TypeVar
 
 T = TypeVar("T")
 
