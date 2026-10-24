@@ -141,7 +141,7 @@ jobs:
         run: echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
       - name: Build e push do BFF
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./backend
           push: true
@@ -150,7 +150,7 @@ jobs:
             ghcr.io/${{ steps.repo.outputs.name }}/bff:${{ github.sha }}
 
       - name: Build e push do portal
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./frontend
           push: true
