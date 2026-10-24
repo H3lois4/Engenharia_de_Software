@@ -111,28 +111,90 @@ jobs:
         run: npm audit --audit-level=high || true
 
   # ---------------------------------------------------------------------------
-  # 4) Publicação automática (deploy no Render)
+  # 4) Build e publicação das imagens Docker no GitHub Container Registry (GHCR)
   #    Só em push na main e só se TODOS os jobs acima passarem.
   # ---------------------------------------------------------------------------
-  deploy:
-    name: Publicação (deploy no Render)
+  build-images:
+    name: Build e push das imagens (GHCR)
     runs-on: ubuntu-latest
     needs: [backend, frontend, dependencias]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
     env:
-      RENDER_DEPLOY_HOOK_BFF: ${{ secrets.RENDER_DEPLOY_HOOK_BFF }}
-      RENDER_DEPLOY_HOOK_WEB: ${{ secrets.RENDER_DEPLOY_HOOK_WEB }}
+      # URLs públicas no Azure (padrão https://<app>.azurewebsites.net)
+      BFF_URL: https://ms-dashboard-bff-heloisa.azurewebsites.net
+      WEB_URL: https://ms-dashboard-web-heloisa.azurewebsites.net
     steps:
-      - name: Disparar deploy do BFF
-        if: ${{ env.RENDER_DEPLOY_HOOK_BFF != '' }}
-        run: curl -fsS "$RENDER_DEPLOY_HOOK_BFF"
+      - uses: actions/checkout@v4
 
-      - name: Disparar deploy do portal
-        if: ${{ env.RENDER_DEPLOY_HOOK_WEB != '' }}
-        run: curl -fsS "$RENDER_DEPLOY_HOOK_WEB"
+      - name: Login no GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Aviso se os hooks não estiverem configurados
-        if: ${{ env.RENDER_DEPLOY_HOOK_BFF == '' && env.RENDER_DEPLOY_HOOK_WEB == '' }}
+      - name: Definir nome do repositório em minúsculas
+        id: repo
+        run: echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Build e push do BFF
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ghcr.io/${{ steps.repo.outputs.name }}/bff:latest
+            ghcr.io/${{ steps.repo.outputs.name }}/bff:${{ github.sha }}
+
+      - name: Build e push do portal
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          build-args: |
+            VITE_API_BASE_URL=${{ env.BFF_URL }}
+          tags: |
+            ghcr.io/${{ steps.repo.outputs.name }}/web:latest
+            ghcr.io/${{ steps.repo.outputs.name }}/web:${{ github.sha }}
+
+  # ---------------------------------------------------------------------------
+  # 5) Deploy nos Azure App Services (containers)
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: Publicação (Azure App Services)
+    runs-on: ubuntu-latest
+    needs: build-images
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # secrets não podem ser usados direto em `if:`; mapeamos para env no nível do job.
+    env:
+      PROFILE_BFF: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BFF }}
+      PROFILE_WEB: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_WEB }}
+    steps:
+      - name: Definir nome do repositório em minúsculas
+        id: repo
+        run: echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy do BFF
+        if: ${{ env.PROFILE_BFF != '' }}
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ms-dashboard-bff-heloisa
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BFF }}
+          images: ghcr.io/${{ steps.repo.outputs.name }}/bff:${{ github.sha }}
+
+      - name: Deploy do portal
+        if: ${{ env.PROFILE_WEB != '' }}
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ms-dashboard-web-heloisa
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_WEB }}
+          images: ghcr.io/${{ steps.repo.outputs.name }}/web:${{ github.sha }}
+
+      - name: Aviso se os publish profiles não estiverem configurados
+        if: ${{ env.PROFILE_BFF == '' && env.PROFILE_WEB == '' }}
         run: |
-          echo "::warning::Nenhum Deploy Hook configurado. Cadastre os secrets"
-          echo "RENDER_DEPLOY_HOOK_BFF e RENDER_DEPLOY_HOOK_WEB para publicar automaticamente."
+          echo "::warning::Publish profiles do Azure ausentes. Cadastre os secrets"
+          echo "AZURE_WEBAPP_PUBLISH_PROFILE_BFF e AZURE_WEBAPP_PUBLISH_PROFILE_WEB."
