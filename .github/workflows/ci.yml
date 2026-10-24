@@ -24,7 +24,7 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Instalar Python
         uses: actions/setup-python@v5
@@ -54,7 +54,7 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Instalar Node
         uses: actions/setup-node@v4
@@ -86,7 +86,7 @@ jobs:
     name: Verificação de dependências
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Instalar Python
         uses: actions/setup-python@v5
@@ -127,7 +127,7 @@ jobs:
       BFF_URL: https://ms-dashboard-bff-heloisa-f7haargthjfcbwdj.brazilsouth-01.azurewebsites.net
       WEB_URL: https://ms-dashboard-web-heloisa-g0eqdmgufyb4dtd5.brazilsouth-01.azurewebsites.net
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Login no GHCR
         uses: docker/login-action@v3
