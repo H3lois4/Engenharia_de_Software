@@ -123,9 +123,9 @@ jobs:
       contents: read
       packages: write
     env:
-      # URLs públicas no Azure (padrão https://<app>.azurewebsites.net)
-      BFF_URL: https://ms-dashboard-bff-heloisa.azurewebsites.net
-      WEB_URL: https://ms-dashboard-web-heloisa.azurewebsites.net
+      # URLs públicas reais no Azure (o Azure adiciona sufixo e usa domínio regional)
+      BFF_URL: https://ms-dashboard-bff-heloisa-f7haargthjfcbwdj.brazilsouth-01.azurewebsites.net
+      WEB_URL: https://ms-dashboard-web-heloisa-g0eqdmgufyb4dtd5.brazilsouth-01.azurewebsites.net
     steps:
       - uses: actions/checkout@v4
 
