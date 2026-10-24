@@ -15,8 +15,8 @@ FROM nginx:1.27-alpine
 # de runtime do nginx ($host, $uri, $bff_upstream) são preservadas.
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
-# PORT: porta de escuta (Render sobrescreve). BFF_UPSTREAM: host:porta do BFF no
-# docker-compose (na nuvem a rota de proxy não é usada).
+# PORT: porta de escuta (o Azure/host sobrescreve via WEBSITES_PORT=80).
+# BFF_UPSTREAM: host:porta do BFF no docker-compose (na nuvem a rota de proxy não é usada).
 ENV PORT=80 \
     BFF_UPSTREAM=bff:8006 \
     NGINX_ENVSUBST_FILTER="^(PORT|BFF_UPSTREAM)$"

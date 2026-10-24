@@ -21,6 +21,12 @@ updates:
     labels:
       - "dependencies"
       - "frontend"
+    # Ignora atualizações de versão MAIOR (major): elas costumam introduzir
+    # mudanças que quebram o build (ex.: Tailwind 4, jsdom 30, React 19).
+    # Correções de segurança e updates menores (minor/patch) continuam ativos.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   # As próprias GitHub Actions usadas no pipeline
   - package-ecosystem: "github-actions"

@@ -1,5 +1,5 @@
 # Template processado na inicialização do container (envsubst substitui ${PORT} e
-# ${BFF_UPSTREAM}). Render define PORT (padrão 10000); no docker-compose usamos 80.
+# ${BFF_UPSTREAM}). O host define a porta via WEBSITES_PORT; no docker-compose usamos 80.
 server {
     listen ${PORT};
     server_name _;

@@ -1,155 +1,133 @@
-# Guia de deploy — como publicar sua própria cópia no Render
+# Guia de deploy — Azure App Services (containers) via GitHub Actions + GHCR
 
-Este guia é para um colega de equipe pegar o código do `ms-dashboard` (portal + BFF do
-Módulo 6) e publicar **a sua própria cópia** na nuvem, no Render, via Docker.
+Este guia descreve como o `ms-dashboard` (portal + BFF do Módulo 6) é publicado na nuvem, e como
+um colega pode reproduzir o deploy em uma **cópia própria**.
 
-> Tempo estimado: ~20 minutos (a maior parte é esperar o build).
-> Pré-requisitos: uma conta no GitHub e uma conta no Render (pode entrar com o GitHub).
-> **Você NÃO precisa instalar Docker na sua máquina** — o Render constrói as imagens na nuvem.
+O deploy é **automático**: a cada push na `main`, o pipeline de CI/CD
+([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) executa lint → testes → verificação
+de dependências → **build das imagens Docker** → **push no GitHub Container Registry (GHCR)** →
+**deploy em dois Azure App Services (containers)**.
+
+> Pré-requisitos: contas no GitHub e no Azure (ex.: Azure for Students com e-mail acadêmico).
+> **Não é preciso ter Docker na máquina** — o pipeline constrói as imagens na nuvem.
 
 ---
 
-## Visão geral
+## Arquitetura
 
-O projeto sobe **dois serviços** independentes, cada um com sua URL pública:
+| Serviço | O que é | Porta do container |
+|---------|---------|:------------------:|
+| BFF (FastAPI) | API que agrega os dados | **8006** |
+| Portal (React/nginx) | Interface que o usuário abre | **80** |
 
-| Serviço | O que é | Exemplo de URL |
-|---------|---------|----------------|
-| `*-bff` | API (FastAPI) que agrega os dados | `https://SEU-bff.onrender.com` |
-| `*-web` | Portal web (React/nginx) que o usuário abre | `https://SEU-web.onrender.com` |
-
-O portal conversa com o BFF. Por isso, **cada um precisa conhecer a URL do outro** — é o
-ponto que mais dá erro, então preste atenção na etapa 4.
-
-> ⚠️ **Nomes de serviço no Render são únicos no mundo todo.** Você **não** pode usar
-> `ms-dashboard-bff` e `ms-dashboard-web` (já são da Heloísa). Escolha nomes próprios, por
-> exemplo `ms-dashboard-bff-gabi` e `ms-dashboard-web-gabi`.
+O portal conversa com o BFF pela internet. Por isso o portal precisa ser **buildado** com a URL
+pública do BFF (`VITE_API_BASE_URL`), e o BFF precisa liberar o domínio do portal no `CORS_ORIGINS`.
 
 ---
 
 ## Etapa 1 — Copiar o código para o seu GitHub
 
-Escolha **uma** das opções.
+Faça um **fork** do repositório, ou clone e envie para um repositório seu. O arquivo
+`.github/workflows/ci.yml` vai junto.
 
-### Opção A — Fork (mais simples, mantém link com o original)
-1. Abra o repositório da Heloísa no GitHub.
-2. Clique em **Fork** (canto superior direito) e crie o fork na sua conta.
+## Etapa 2 — Publicar as imagens no GHCR (primeira execução do pipeline)
 
-### Opção B — Cópia independente (sem vínculo com o original)
-No seu computador, com o Git instalado:
-```bash
-git clone https://github.com/H3lois4/Engenharia_de_Software.git ms-dashboard
-cd ms-dashboard
-git remote remove origin
-git remote add origin https://github.com/SEU-USUARIO/SEU-REPO.git
-git push -u origin main
-```
-(Crie antes um repositório vazio em `github.com/SEU-USUARIO/SEU-REPO`.)
+1. Faça um push na `main` (ou use **Actions ▸ Re-run**). O job `build-images` publica as imagens
+   `.../bff` e `.../web` no GHCR.
+2. Em `https://github.com/<seu-usuario>?tab=packages`, abra cada pacote →
+   **Package settings ▸ Change visibility ▸ Public**. (O Azure precisa puxar imagens públicas.)
 
----
+## Etapa 3 — Criar os dois App Services no Azure
 
-## Etapa 2 — Ajustar os nomes e as URLs no `render.yaml`
+No portal do Azure, **Create a resource ▸ Web App**, para cada serviço:
 
-Abra o arquivo **`render.yaml`** na raiz do projeto e edite. Troque os nomes dos dois serviços
-e as duas URLs cruzadas pelos **seus** nomes. Onde está `ms-dashboard-bff` e
-`ms-dashboard-web`, use os seus (ex.: sufixo `-gabi`).
+**BFF**
+- **Publish:** Container · **OS:** Linux
+- **Name:** ex. `ms-dashboard-bff-SEUNOME`
+- Aba **Container**:
+  - Image Source: **Other container registries** · Access Type: **Public**
+  - Registry server URL: `https://ghcr.io`
+  - Image and tag: `SEU-USUARIO/SEU-REPO/bff:latest` (tudo minúsculo)
+  - **Port: `8006`**  ← crítico (o BFF escuta nessa porta)
 
-Trechos que você precisa alterar:
+**Portal**
+- Igual, mudando:
+  - Image and tag: `SEU-USUARIO/SEU-REPO/web:latest`
+  - **Port: `80`**
+
+> ⚠️ **A porta é o erro mais comum.** Se deixar a porta padrão (80) no BFF, o container não sobe
+> e o site responde `503`. BFF = 8006, portal = 80.
+
+## Etapa 4 — Variáveis de ambiente de cada App Service
+
+Em **Settings ▸ Environment variables**:
+
+**BFF:**
+| Nome | Valor |
+|------|-------|
+| `WEBSITES_PORT` | `8006` |
+| `USE_MOCKS` | `true` |
+| `ENABLE_DEV_LOGIN` | `true` |
+| `JWT_SECRET` | (texto aleatório longo) |
+| `CORS_ORIGINS` | a URL **real** do portal (ver abaixo) |
+
+**Portal:**
+| Nome | Valor |
+|------|-------|
+| `WEBSITES_PORT` | `80` |
+
+> **URL real com sufixo:** o Azure gera URLs como
+> `https://<app>-<hash>.<regiao>-01.azurewebsites.net` (ex.:
+> `https://ms-dashboard-web-heloisa-g0eqdmgufyb4dtd5.brazilsouth-01.azurewebsites.net`). Pegue a
+> URL exata em **Overview ▸ Default domain** de cada App Service.
+
+## Etapa 5 — Apontar o pipeline para as URLs reais
+
+No `.github/workflows/ci.yml`, no job `build-images`, ajuste:
 
 ```yaml
-services:
-  - type: web
-    name: ms-dashboard-bff-gabi          # << seu nome do BFF
-    ...
-    envVars:
-      ...
-      - key: CORS_ORIGINS
-        value: https://ms-dashboard-web-gabi.onrender.com   # << URL do SEU portal
-
-  - type: web
-    name: ms-dashboard-web-gabi          # << seu nome do portal
-    ...
-    envVars:
-      - key: VITE_API_BASE_URL
-        value: https://ms-dashboard-bff-gabi.onrender.com   # << URL do SEU BFF
+    env:
+      BFF_URL: https://<app-bff>-<hash>.<regiao>-01.azurewebsites.net
+      WEB_URL: https://<app-web>-<hash>.<regiao>-01.azurewebsites.net
 ```
 
-Regra de ouro:
-- `CORS_ORIGINS` (no BFF) = a URL do **portal** (`-web`).
-- `VITE_API_BASE_URL` (no portal) = a URL do **BFF** (`-bff`).
+E confirme os `app-name` no job `deploy` (o nome curto do recurso, sem o sufixo).
 
-> As URLs seguem sempre o padrão `https://<nome-do-serviço>.onrender.com`. Como você já
-> definiu os nomes acima, já sabe quais serão as URLs.
+## Etapa 6 — Cadastrar os Secrets no GitHub
 
-Salve, faça commit e envie:
-```bash
-git add render.yaml
-git commit -m "chore: ajusta nomes e URLs do deploy para minha conta"
-git push
-```
+1. Em cada App Service: **Overview ▸ Download publish profile** (um XML). Se o download estiver
+   bloqueado com *"Basic authentication is disabled"*, ligue a **Basic Auth Publishing** em
+   **Settings ▸ Configuration** e tente de novo.
+2. No GitHub: **Settings ▸ Secrets and variables ▸ Actions ▸ New repository secret**:
+   - `AZURE_WEBAPP_PUBLISH_PROFILE_BFF` → XML do BFF
+   - `AZURE_WEBAPP_PUBLISH_PROFILE_WEB` → XML do portal
 
----
+> Se você **recriar** um App Service, o publish profile muda — baixe e **atualize o secret**.
 
-## Etapa 3 — Criar o Blueprint no Render
+## Etapa 7 — Disparar o deploy e validar
 
-1. Acesse https://render.com e faça login (pode ser com o GitHub).
-2. **New ▸ Blueprint**.
-3. Conecte e selecione o **seu** repositório. O Render lê o `render.yaml` e mostra os dois
-   serviços com os nomes que você escolheu.
-4. Confirme a criação (**Apply** / **Create**). O Render começa a construir as imagens Docker.
-
-O primeiro build leva alguns minutos (o do portal é o mais demorado). Acompanhe em cada
-serviço na aba **Logs**. Quando ficarem com o selo **Live** (verde), estão no ar.
+1. Faça um push na `main` (ou **Re-run** o último workflow).
+2. Aguarde os jobs ficarem verdes e o Azure puxar as imagens (alguns minutos no primeiro boot).
+3. Confirme:
+   - `https://<bff>/health` → `{"status":"ok"}`
+   - abra o portal, clique em **Entrar como Product Owner** → o Dashboard deve abrir.
 
 ---
 
-## Etapa 4 — Conferir se o portal e o BFF se conversam
+## Variáveis de build (lembrete)
 
-Esta é a etapa que evita o erro clássico de "login não entra". Como você já colocou as URLs
-certas no `render.yaml` (etapa 2), deve funcionar de primeira. Confirme assim:
+`VITE_API_BASE_URL` é lida em **tempo de build** do portal (o Vite "assa" a URL no JavaScript).
+O pipeline injeta esse valor como build-arg a partir de `BFF_URL`. Mudar a URL do BFF exige
+**rebuild** da imagem do portal (um novo push resolve).
 
-1. Abra a URL do seu **BFF** + `/health`, ex.: `https://ms-dashboard-bff-gabi.onrender.com/health`
-   → deve mostrar `{"status":"ok"}`.
-2. Abra a URL do seu **portal**, ex.: `https://ms-dashboard-web-gabi.onrender.com`.
-3. Clique em **Entrar como Product Owner** → o Dashboard deve abrir.
+## Integração com os outros módulos
 
-> Se o portal abrir mas o login não entrar, quase sempre é a `VITE_API_BASE_URL` com a URL
-> errada. Corrija no `render.yaml` (ou em **ms-dashboard-web-gabi ▸ Environment**) e faça
-> **Manual Deploy ▸ Clear build cache & deploy** no portal — ele precisa ser **reconstruído**,
-> porque essa URL é "assada" no JavaScript durante o build, não apenas lida na inicialização.
+Quando `ms-notifications`, `ms-chat` e os Módulos 1 e 2 estiverem publicados, troque nas
+variáveis do BFF: `USE_MOCKS=false` e as URLs `NOTIFICATIONS_URL`, `CHAT_URL`, `BACKLOG_URL`,
+`GITHUB_URL`. Nenhuma mudança de código é necessária.
 
----
+## Testar localmente (opcional, requer Docker)
 
-## Variáveis de ambiente (já vêm prontas no `render.yaml`)
-
-| Variável (serviço) | Valor | Para que serve |
-|--------------------|-------|----------------|
-| `USE_MOCKS` (BFF) | `true` | Usa dados simulados enquanto os outros módulos não estão no ar |
-| `ENABLE_DEV_LOGIN` (BFF) | `true` | Permite o login de demonstração (PO/PM/Dev) sem o Módulo 1 |
-| `JWT_SECRET` (BFF) | gerado pelo Render | Segredo para validar o token |
-| `CORS_ORIGINS` (BFF) | URL do portal | Libera o navegador a chamar o BFF |
-| `VITE_API_BASE_URL` (portal) | URL do BFF | O portal sabe onde está a API (tempo de build) |
-
----
-
-## Dúvidas rápidas (FAQ)
-
-**O primeiro acesso está lento / parece travado.**
-Normal no plano gratuito: o serviço "dorme" após inatividade e leva ~30-50s para acordar no
-primeiro acesso. Abra o portal alguns minutos antes de apresentar.
-
-**Preciso instalar Docker?**
-Não. Só para testar localmente. Para o deploy, o Render constrói tudo na nuvem.
-
-**Mudei uma variável e nada aconteceu.**
-`VITE_API_BASE_URL` só tem efeito em um **novo build** do portal (Manual Deploy ▸ Clear build
-cache & deploy). As variáveis do BFF valem com um simples restart.
-
-**Como ligar os serviços reais dos outros grupos depois?**
-No BFF, troque `USE_MOCKS=false` e preencha `NOTIFICATIONS_URL`, `CHAT_URL`, `BACKLOG_URL`,
-`GITHUB_URL` com as URLs reais. Nenhuma mudança de código é necessária.
-
-**Testar localmente antes (opcional, requer Docker):**
 ```bash
 docker compose up --build
 # portal: http://localhost:8080   | BFF: http://localhost:8006
