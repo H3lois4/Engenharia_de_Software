@@ -1,4 +1,4 @@
-import { useNotifications } from "./NotificationsContext";
+import { useNotifications } from "./useNotifications";
 import { priorityBorder, priorityBadge, priorityLabel, sourceMeta } from "./meta";
 
 // Toasts de novas notificações (canto inferior direito).

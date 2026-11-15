@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../auth/useAuth";
 import { UnavailableState } from "../../components/UnavailableState";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { api, ApiError, getToken } from "../../lib/apiClient";

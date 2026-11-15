@@ -1,33 +1,8 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { api, getToken, setToken, setUnauthorizedHandler } from "../lib/apiClient";
 import { apiUrl } from "../lib/config";
-import {
-  cleanToken,
-  InvalidTokenError,
-  parseToken,
-  tryParseToken,
-  type SessionUser,
-} from "./token";
-
-interface AuthState {
-  user: SessionUser | null;
-  token: string | null;
-  loginWithToken: (token: string) => void;
-  /** Login com um JWT real (ex.: emitido pelo Módulo 1). Lança InvalidTokenError. */
-  loginWithJwt: (rawToken: string) => Promise<void>;
-  loginDev: (profile: "po" | "pm" | "dev") => Promise<void>;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthState | null>(null);
+import { cleanToken, InvalidTokenError, parseToken, tryParseToken } from "./token";
+import { AuthContext } from "./useAuth";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setTokenState] = useState<string | null>(() => getToken());
@@ -86,10 +61,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth(): AuthState {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth deve ser usado dentro de AuthProvider");
-  return ctx;
 }

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { UnavailableState } from "../../components/UnavailableState";
 import type { Priority, Source } from "../../lib/types";
 import { NotificationCard } from "./NotificationCard";
-import { useNotifications } from "./NotificationsContext";
+import { useNotifications } from "./useNotifications";
 import { priorityLabel, sourceMeta } from "./meta";
 
 type StatusFilter = "all" | "unread" | "read";

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, type ReactNode } from "react";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../auth/useAuth";
 import { ProjectContext } from "./projectContext";
 
 const PROJECT_KEY = "ms-dashboard.project";

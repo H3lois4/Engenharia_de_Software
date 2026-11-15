@@ -1,21 +1,7 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { ThemeContext, type Theme } from "./useTheme";
 
-type Theme = "light" | "dark";
 const THEME_KEY = "ms-dashboard.theme";
-
-interface ThemeState {
-  theme: Theme;
-  toggle: () => void;
-}
-
-const ThemeContext = createContext<ThemeState | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(
@@ -32,15 +18,5 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  return (
-    <ThemeContext.Provider value={{ theme, toggle }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-}
-
-export function useTheme(): ThemeState {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error("useTheme deve ser usado dentro de ThemeProvider");
-  return ctx;
+  return <ThemeContext.Provider value={{ theme, toggle }}>{children}</ThemeContext.Provider>;
 }

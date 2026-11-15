@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "./useAuth";
 import { InvalidTokenError } from "./token";
 
 type Profile = "po" | "pm" | "dev";

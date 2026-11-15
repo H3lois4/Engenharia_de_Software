@@ -1,36 +1,17 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../auth/useAuth";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { api, getToken } from "../../lib/apiClient";
 import { wsUrl } from "../../lib/config";
-import type {
-  ListResult,
-  Notification,
-  UnreadResult,
-} from "../../lib/types";
-
-interface NotificationsState {
-  items: Notification[];
-  unreadTotal: number;
-  available: boolean;
-  wsOpen: boolean;
-  toasts: Notification[];
-  refresh: () => Promise<void>;
-  markRead: (id: string) => Promise<void>;
-  markAllRead: () => Promise<void>;
-  dismissToast: (id: string) => void;
-}
-
-const Ctx = createContext<NotificationsState | null>(null);
+import type { ListResult, Notification, UnreadResult } from "../../lib/types";
+import { NotificationsContext, type NotificationsState } from "./useNotifications";
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -51,10 +32,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       setAvailable(true);
       setItems(list.page.items);
       list.page.items.forEach((n) => seen.current.add(n.id));
-      const unread = await api.get<UnreadResult>(
-        "/api/bff/notifications/unread-count",
-      );
-      setUnreadTotal(unread.state === "ok" ? unread.count?.total ?? 0 : 0);
+      const unread = await api.get<UnreadResult>("/api/bff/notifications/unread-count");
+      setUnreadTotal(unread.state === "ok" ? (unread.count?.total ?? 0) : 0);
     } catch {
       setAvailable(false);
     }
@@ -90,8 +69,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const socketUrl =
-    user && getToken() ? wsUrl(`/ws/notifications?token=${getToken()}`) : null;
+  const socketUrl = user && getToken() ? wsUrl(`/ws/notifications?token=${getToken()}`) : null;
   const status = useWebSocket(socketUrl, { onMessage, onReconnect: refresh, enabled: !!user });
 
   useEffect(() => {
@@ -113,11 +91,5 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     [items, unreadTotal, available, status, toasts, refresh, markRead, markAllRead, dismissToast],
   );
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
-}
-
-export function useNotifications(): NotificationsState {
-  const ctx = useContext(Ctx);
-  if (!ctx) throw new Error("useNotifications requer NotificationsProvider");
-  return ctx;
+  return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;
 }

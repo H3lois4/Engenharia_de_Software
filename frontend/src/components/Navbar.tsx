@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
-import { useTheme } from "../theme/ThemeProvider";
+import { useAuth } from "../auth/useAuth";
+import { useTheme } from "../theme/useTheme";
 import { ProjectSelect } from "./ProjectSelect";
 
 const linkBase =

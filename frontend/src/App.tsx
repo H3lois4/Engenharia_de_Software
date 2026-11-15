@@ -1,15 +1,14 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { AuthProvider, useAuth } from "./auth/AuthContext";
+import { AuthProvider } from "./auth/AuthProvider";
+import { useAuth } from "./auth/useAuth";
 import { LoginScreen } from "./auth/LoginScreen";
 import { Navbar } from "./components/Navbar";
 import { ChatPage } from "./features/chat/ChatPage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
 import { ProjectProvider } from "./features/project/ProjectProvider";
 import { NotificationsPage } from "./features/notifications/NotificationsPage";
-import {
-  NotificationsProvider,
-  useNotifications,
-} from "./features/notifications/NotificationsContext";
+import { NotificationsProvider } from "./features/notifications/NotificationsProvider";
+import { useNotifications } from "./features/notifications/useNotifications";
 import { Toasts } from "./features/notifications/Toasts";
 import { ThemeProvider } from "./theme/ThemeProvider";
 
