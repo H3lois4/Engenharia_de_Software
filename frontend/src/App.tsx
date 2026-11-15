@@ -18,7 +18,7 @@ function ShellContent() {
   return (
     <div className="min-h-full bg-bg text-text">
       <Navbar unreadBadge={unreadTotal} />
-      <main className="mx-auto max-w-6xl p-6">
+      <main className="mx-auto max-w-6xl p-4 sm:p-6">
         <Routes>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/notificacoes" element={<NotificationsPage />} />

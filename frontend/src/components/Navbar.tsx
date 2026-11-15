@@ -4,7 +4,7 @@ import { useTheme } from "../theme/ThemeProvider";
 import { ProjectSelect } from "./ProjectSelect";
 
 const linkBase =
-  "px-3 py-2 rounded-md text-md font-medium transition-colors";
+  "whitespace-nowrap px-3 py-2 rounded-md text-sm sm:text-md font-medium transition-colors";
 
 export function Navbar({ unreadBadge }: { unreadBadge?: number }) {
   const { user, logout } = useAuth();
@@ -12,20 +12,23 @@ export function Navbar({ unreadBadge }: { unreadBadge?: number }) {
 
   return (
     <header className="bg-primary">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
-        <div className="flex items-center gap-6">
-          {/* Vermelho Mackenzie SOMENTE no logo */}
-          <span className="text-lg font-semibold text-white">
-            Módulo<span className="text-brand-accent">6</span>
-          </span>
-          <div className="flex gap-1">
-            <TabLink to="/dashboard" label="Dashboard" />
-            <TabLink to="/notificacoes" label="Notificações" badge={unreadBadge} />
-            <TabLink to="/chat" label="Chat" />
-          </div>
+      {/* Em telas pequenas as abas quebram para uma segunda linha (order-last + w-full). */}
+      <nav
+        aria-label="Navegação principal"
+        className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6"
+      >
+        {/* Vermelho Mackenzie SOMENTE no logo */}
+        <span className="text-lg font-semibold text-white">
+          Módulo<span className="text-brand-accent">6</span>
+        </span>
+
+        <div className="order-last flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto sm:flex-1">
+          <TabLink to="/dashboard" label="Dashboard" />
+          <TabLink to="/notificacoes" label="Notificações" badge={unreadBadge} />
+          <TabLink to="/chat" label="Chat" />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
           <ProjectSelect />
           <button
             type="button"
@@ -33,13 +36,15 @@ export function Navbar({ unreadBadge }: { unreadBadge?: number }) {
             className="rounded-md px-3 py-2 text-sm font-medium text-white/90 hover:bg-primary-hover"
             aria-label="Alternar tema claro/escuro"
           >
-            {theme === "light" ? "🌙 Escuro" : "☀️ Claro"}
+            <span aria-hidden>{theme === "light" ? "🌙" : "☀️"}</span>
+            <span className="ml-1 hidden sm:inline">{theme === "light" ? "Escuro" : "Claro"}</span>
           </button>
           {user && (
             <>
-              <span className="text-sm text-white/80">
+              <span className="hidden text-sm text-white/80 md:inline">
                 {user.user_id} · {user.role}
               </span>
+              <span className="text-xs font-semibold text-white/80 md:hidden">{user.role}</span>
               <button
                 type="button"
                 onClick={logout}
