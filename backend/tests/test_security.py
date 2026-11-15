@@ -84,6 +84,35 @@ def test_allowed_role_passes(auth_client):
     assert r.status_code == 200
 
 
+@pytest.mark.parametrize(
+    ("emitido", "esperado"),
+    [
+        ("SCRUM_MASTER", "PM"),
+        ("scrum-master", "PM"),
+        ("Scrum Master", "PM"),
+        ("SM", "PM"),
+        ("product_owner", "PO"),
+        ("dev", "DEV"),
+        ("Developer", "DEV"),
+    ],
+)
+def test_role_aliases_are_normalized(auth_client, emitido, esperado):
+    r = auth_client.get("/me", headers={"Authorization": f"Bearer {_token(emitido)}"})
+    assert r.status_code == 200
+    assert r.json()["role"] == esperado
+
+
+def test_scrum_master_alias_gets_pm_permissions(auth_client):
+    r = auth_client.get("/po-only", headers={"Authorization": f"Bearer {_token('SCRUM_MASTER')}"})
+    assert r.status_code == 200  # /po-only aceita PO e PM
+
+
+@pytest.mark.parametrize("papel", ["ADMIN", "", "   ", 42, None])
+def test_unknown_role_is_still_rejected(auth_client, papel):
+    r = auth_client.get("/me", headers={"Authorization": f"Bearer {_token(papel)}"})
+    assert r.status_code == 401
+
+
 def test_dev_tokens_endpoint(client):
     r = client.get("/api/bff/dev/tokens")
     assert r.status_code == 200

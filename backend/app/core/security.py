@@ -25,6 +25,27 @@ class Role(str, Enum):
     DEV = "DEV"
 
 
+# O Módulo 1 pode nomear os papéis de forma diferente (ex.: SCRUM_MASTER no material da
+# plataforma). Aceitamos as variações conhecidas e normalizamos para os três papéis do portal.
+_ROLE_ALIASES: dict[str, Role] = {
+    "PO": Role.PO,
+    "PRODUCT_OWNER": Role.PO,
+    "PM": Role.PM,
+    "SM": Role.PM,
+    "SCRUM_MASTER": Role.PM,
+    "DEV": Role.DEV,
+    "DEVELOPER": Role.DEV,
+}
+
+
+def parse_role(raw: object) -> Role | None:
+    """Normaliza o papel vindo do token (sem diferenciar maiúsculas, espaços ou hífens)."""
+    if not isinstance(raw, str):
+        return None
+    key = raw.strip().upper().replace("-", "_").replace(" ", "_")
+    return _ROLE_ALIASES.get(key)
+
+
 @dataclass(frozen=True)
 class CurrentUser:
     user_id: str
@@ -61,10 +82,9 @@ def _user_from_claims(claims: dict) -> CurrentUser:
     project_ids = claims.get("project_ids", [])
     if not user_id or not role_raw:
         raise UnauthorizedError("Token sem claims obrigatórias (sub/role).")
-    try:
-        role = Role(role_raw)
-    except ValueError as exc:
-        raise UnauthorizedError("Papel inválido no token.") from exc
+    role = parse_role(role_raw)
+    if role is None:
+        raise UnauthorizedError("Papel inválido no token.")
     if not isinstance(project_ids, list):
         raise UnauthorizedError("project_ids inválido no token.")
     return CurrentUser(user_id=str(user_id), role=role, project_ids=tuple(project_ids))
