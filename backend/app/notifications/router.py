@@ -42,8 +42,12 @@ async def list_notifications(
     client = get_notifications_client()
     reg = get_registry()
     try:
+        # A chave inclui cursor e filtros: o cache "stale" nunca pode devolver outra página/filtro.
+        cache_key = (
+            f"notifications:list:{user.user_id}:{cursor}:{priority}:{source}:{status}:{limit}"
+        )
         result = await reg.guarded_call(
-            f"notifications:list:{user.user_id}",
+            cache_key,
             lambda: client.list(
                 user,
                 cursor=cursor,

@@ -130,7 +130,15 @@ class MockNotificationsClient:
         elif status == "read":
             items = [n for n in items if n.read_at is not None]
         items = sorted(items, key=lambda n: n.created_at, reverse=True)
-        return NotificationPage(items=items[:limit], next_cursor=None)
+
+        # Cursor opaco para o cliente; aqui é só o deslocamento (offset) na lista ordenada.
+        try:
+            offset = max(int(cursor), 0) if cursor else 0
+        except ValueError:
+            offset = 0
+        page = items[offset : offset + limit]
+        has_more = offset + limit < len(items)
+        return NotificationPage(items=page, next_cursor=str(offset + limit) if has_more else None)
 
     async def unread_count(self, user: CurrentUser) -> UnreadCount:
         unread = [n for n in self._visible(user) if n.read_at is None]

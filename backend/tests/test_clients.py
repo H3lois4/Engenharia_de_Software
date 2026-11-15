@@ -45,6 +45,28 @@ async def test_notifications_list_and_filters():
     assert all(n.source == Source.GITHUB for n in only_github.items)
 
 
+async def test_notifications_cursor_pagination():
+    c = MockNotificationsClient()
+    first = await c.list(USER, cursor=None, priority=None, source=None, status=None, limit=3)
+    assert len(first.items) == 3
+    assert first.next_cursor == "3"
+
+    second = await c.list(
+        USER, cursor=first.next_cursor, priority=None, source=None, status=None, limit=3
+    )
+    assert len(second.items) == 1
+    assert second.next_cursor is None  # acabou
+
+    ids = [n.id for n in first.items + second.items]
+    assert len(ids) == len(set(ids)) == 4  # sem repetir nem perder itens
+
+
+async def test_notifications_invalid_cursor_falls_back_to_first_page():
+    c = MockNotificationsClient()
+    page = await c.list(USER, cursor="lixo", priority=None, source=None, status=None, limit=20)
+    assert len(page.items) == 4
+
+
 async def test_notifications_unread_and_mark_read():
     c = MockNotificationsClient()
     before = await c.unread_count(USER)

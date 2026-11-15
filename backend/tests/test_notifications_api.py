@@ -114,3 +114,52 @@ def test_ws_streams_with_valid_token(client, monkeypatch):
     with client.websocket_connect(f"/ws/notifications?token={_token()}") as ws:
         msg = ws.receive_json()
         assert msg["event"] == "notification.new"
+
+
+def test_list_paginates_with_cursor(client):
+    first = client.get("/api/bff/notifications", params={"limit": 3}, headers=_auth()).json()
+    assert len(first["page"]["items"]) == 3
+    cursor = first["page"]["next_cursor"]
+    assert cursor == "3"
+
+    second = client.get(
+        "/api/bff/notifications", params={"limit": 3, "cursor": cursor}, headers=_auth()
+    ).json()
+    assert len(second["page"]["items"]) == 1
+    assert second["page"]["next_cursor"] is None
+
+
+def test_stale_cache_never_serves_another_page(client, monkeypatch):
+    """Se o upstream cair, a página 2 não pode ser respondida com o cache da página 1."""
+    import app.notifications.router as nrouter
+
+    real = nrouter.get_notifications_client()
+    state = {"down": False}
+
+    class Flaky:
+        async def list(self, *args, **kwargs):
+            if state["down"]:
+                raise RuntimeError("ms-notifications fora do ar")
+            return await real.list(*args, **kwargs)
+
+    monkeypatch.setattr(nrouter, "get_notifications_client", lambda: Flaky())
+
+    ok = client.get("/api/bff/notifications", params={"limit": 3}, headers=_auth()).json()
+    assert ok["state"] == "ok"
+
+    state["down"] = True
+    # Mesma consulta: pode vir do cache (stale).
+    same = client.get("/api/bff/notifications", params={"limit": 3}, headers=_auth()).json()
+    assert same["state"] == "ok" and same["stale"] is True
+
+    # Outra página (nunca consultada antes): não existe cache para ela.
+    other = client.get(
+        "/api/bff/notifications", params={"limit": 3, "cursor": "3"}, headers=_auth()
+    ).json()
+    assert other["state"] == "unavailable"
+
+    # Outro filtro também não reaproveita o cache.
+    filtered = client.get(
+        "/api/bff/notifications", params={"limit": 3, "priority": "low"}, headers=_auth()
+    ).json()
+    assert filtered["state"] == "unavailable"
