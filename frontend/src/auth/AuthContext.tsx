@@ -8,41 +8,31 @@ import {
   type ReactNode,
 } from "react";
 import { api, getToken, setToken, setUnauthorizedHandler } from "../lib/apiClient";
-import type { Role } from "../lib/types";
-
-interface SessionUser {
-  user_id: string;
-  role: Role;
-  project_ids: string[];
-}
+import { apiUrl } from "../lib/config";
+import {
+  cleanToken,
+  InvalidTokenError,
+  parseToken,
+  tryParseToken,
+  type SessionUser,
+} from "./token";
 
 interface AuthState {
   user: SessionUser | null;
   token: string | null;
   loginWithToken: (token: string) => void;
+  /** Login com um JWT real (ex.: emitido pelo Módulo 1). Lança InvalidTokenError. */
+  loginWithJwt: (rawToken: string) => Promise<void>;
   loginDev: (profile: "po" | "pm" | "dev") => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
 
-// Decodifica o payload do JWT (sem validar assinatura — a validação é no BFF).
-function decode(token: string): SessionUser | null {
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return {
-      user_id: payload.sub ?? payload.user_id,
-      role: payload.role,
-      project_ids: payload.project_ids ?? [],
-    };
-  } catch {
-    return null;
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setTokenState] = useState<string | null>(() => getToken());
-  const user = useMemo(() => (token ? decode(token) : null), [token]);
+  // Token salvo mas ilegível/expirado => sem sessão (volta para a tela de login).
+  const user = useMemo(() => (token ? tryParseToken(token) : null), [token]);
 
   const loginWithToken = useCallback((t: string) => {
     setToken(t);
@@ -62,13 +52,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [loginWithToken],
   );
 
+  const loginWithJwt = useCallback(
+    async (rawToken: string) => {
+      parseToken(rawToken); // valida formato, claims e expiração
+      const clean = cleanToken(rawToken);
+
+      // Confere com o BFF (que valida a assinatura) antes de guardar a sessão.
+      let res: Response;
+      try {
+        res = await fetch(apiUrl("/api/bff/notifications/unread-count"), {
+          headers: { Authorization: `Bearer ${clean}` },
+        });
+      } catch {
+        throw new InvalidTokenError("Não foi possível falar com o BFF. Ele está no ar?");
+      }
+      if (res.status === 401) {
+        throw new InvalidTokenError(
+          "O BFF recusou o token (assinatura inválida ou expirada).",
+        );
+      }
+      loginWithToken(clean);
+    },
+    [loginWithToken],
+  );
+
   useEffect(() => {
     setUnauthorizedHandler(() => setTokenState(null));
   }, []);
 
   const value = useMemo(
-    () => ({ user, token, loginWithToken, loginDev, logout }),
-    [user, token, loginWithToken, loginDev, logout],
+    () => ({ user, token, loginWithToken, loginWithJwt, loginDev, logout }),
+    [user, token, loginWithToken, loginWithJwt, loginDev, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
