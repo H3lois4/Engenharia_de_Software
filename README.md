@@ -18,6 +18,7 @@ e encapsula os demais serviços da plataforma.
 ## O que este serviço faz
 
 - **Portal central**: navbar + Dashboard, Notificações e Chat, com tema claro/escuro e layout responsivo.
+- **Login com o JWT do Módulo 1** (ou perfis de demonstração) e **seletor de projeto** para quem participa de mais de um.
 - **Dashboard de métricas**: agrega commits, PRs, reviews e User Stories dos Módulos 1 e 2.
 - **Central de notificações**: consome o `ms-notifications`, exibe feed, sino com contador e toasts em tempo real.
 - **Chat da equipe**: consome o `ms-chat`, com salas por projeto e mensagens em tempo real.
@@ -85,11 +86,16 @@ npm run dev                    # http://localhost:5173
 
 O Vite encaminha `/api` e `/ws` para o BFF em `localhost:8006` (ver `vite.config.ts`).
 
-### Login de desenvolvimento
+### Login
 
-Sem o Módulo 1 no ar, use o login de desenvolvimento na tela inicial (Product Owner, Scrum
-Master ou Desenvolvedor). Os tokens de teste vêm de `GET /api/bff/dev/tokens`, disponível quando
-`APP_ENV=development` **ou** quando `ENABLE_DEV_LOGIN=true`.
+A tela inicial oferece duas formas de entrar:
+
+- **Token do Módulo 1:** cole o JWT no campo "Entrar com token". O portal confere formato, claims
+  (`sub`, `role` ∈ `PO`/`PM`/`DEV`, `project_ids`) e expiração, e o BFF valida a assinatura antes
+  de a sessão ser guardada. Um erro claro aparece se o token for recusado.
+- **Perfil de demonstração:** sem o Módulo 1 no ar, entre como Product Owner, Scrum Master ou
+  Desenvolvedor. Os tokens de teste vêm de `GET /api/bff/dev/tokens`, disponível quando
+  `APP_ENV=development` **ou** quando `ENABLE_DEV_LOGIN=true`.
 
 > **Produção/demonstração:** como o Módulo 1 (autenticação real) ainda não existe, o deploy liga
 > `ENABLE_DEV_LOGIN=true` para permitir a demonstração. Esse login gera tokens de qualquer perfil
@@ -208,7 +214,11 @@ cd frontend && npm run test
 
 - **BFF**: resiliência (timeout/breaker/cache), degradação graciosa do dashboard, auth e papéis,
   rotas de notificações e chat (incluindo estados de indisponibilidade e WebSocket).
-- **Front-end**: prioridade → cor no card e estado de indisponibilidade.
+- **Front-end** (52 testes): leitura e validação do JWT (inclusive base64url), login por token,
+  sessão, seletor de projeto, reconexão do WebSocket com backoff exponencial, dashboard com falha
+  isolada por card e cache, prioridade → cor no card e estados de indisponibilidade.
+
+O pipeline de CI roda também `ruff` (BFF) e `eslint` + `tsc` (front-end), sem warnings.
 
 ## Estrutura do repositório
 
