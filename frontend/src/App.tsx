@@ -4,6 +4,7 @@ import { LoginScreen } from "./auth/LoginScreen";
 import { Navbar } from "./components/Navbar";
 import { ChatPage } from "./features/chat/ChatPage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
+import { ProjectProvider } from "./features/project/ProjectProvider";
 import { NotificationsPage } from "./features/notifications/NotificationsPage";
 import {
   NotificationsProvider,
@@ -34,9 +35,11 @@ function Shell() {
   const { user } = useAuth();
   if (!user) return <LoginScreen />;
   return (
-    <NotificationsProvider>
-      <ShellContent />
-    </NotificationsProvider>
+    <ProjectProvider>
+      <NotificationsProvider>
+        <ShellContent />
+      </NotificationsProvider>
+    </ProjectProvider>
   );
 }
 

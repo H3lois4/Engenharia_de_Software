@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { useTheme } from "../theme/ThemeProvider";
+import { ProjectSelect } from "./ProjectSelect";
 
 const linkBase =
   "px-3 py-2 rounded-md text-md font-medium transition-colors";
@@ -25,6 +26,7 @@ export function Navbar({ unreadBadge }: { unreadBadge?: number }) {
         </div>
 
         <div className="flex items-center gap-3">
+          <ProjectSelect />
           <button
             type="button"
             onClick={toggle}

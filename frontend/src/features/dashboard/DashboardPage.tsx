@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "../../auth/AuthContext";
 import { api, ApiError } from "../../lib/apiClient";
+import { useProject } from "../project/projectContext";
 import type { DashboardCard, DashboardResponse, StoriesByStatus, WeeklyPoint } from "../../lib/types";
 import { MetricCard, MetricNumber } from "./MetricCard";
 import { WeeklyChart } from "./WeeklyChart";
@@ -13,8 +13,7 @@ const CARD_LABELS: Record<string, string> = {
 };
 
 export function DashboardPage() {
-  const { user } = useAuth();
-  const projectId = user?.project_ids[0] ?? "";
+  const { projectId } = useProject();
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,6 +31,7 @@ export function DashboardPage() {
   }, [projectId]);
 
   useEffect(() => {
+    setData(null); // evita mostrar métricas do projeto anterior durante o carregamento
     void load();
     const t = setInterval(() => void load(), 30_000);
     return () => clearInterval(t);
@@ -50,7 +50,9 @@ export function DashboardPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold text-text">Dashboard do Projeto</h1>
+      <h1 className="text-xl font-semibold text-text">
+        Dashboard do Projeto <span className="font-mono text-md text-text-muted">{projectId}</span>
+      </h1>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SimpleMetric card={byKey.get("commits_week")} label={CARD_LABELS.commits_week} />

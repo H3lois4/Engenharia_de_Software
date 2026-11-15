@@ -4,11 +4,12 @@ import { UnavailableState } from "../../components/UnavailableState";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { api, ApiError, getToken } from "../../lib/apiClient";
 import { wsUrl } from "../../lib/config";
+import { useProject } from "../project/projectContext";
 import type { ChatHistoryResult, ChatMessage } from "../../lib/types";
 
 export function ChatPage() {
   const { user } = useAuth();
-  const projectId = user?.project_ids[0] ?? "";
+  const { projectId } = useProject();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [available, setAvailable] = useState(true);
   const [text, setText] = useState("");
@@ -26,7 +27,8 @@ export function ChatPage() {
         return;
       }
       setAvailable(true);
-      res.messages.forEach((m) => seen.current.add(m.id));
+      // O histórico é a fonte da verdade da sala: substitui o que já tínhamos visto.
+      seen.current = new Set(res.messages.map((m) => m.id));
       setMessages(res.messages);
     } catch {
       setAvailable(false);
@@ -50,6 +52,7 @@ export function ChatPage() {
   const status = useWebSocket(socketUrl, { onMessage, onReconnect: loadHistory, enabled: !!projectId });
 
   useEffect(() => {
+    setMessages([]); // troca de sala: não mostrar mensagens do projeto anterior
     void loadHistory();
   }, [loadHistory]);
 
