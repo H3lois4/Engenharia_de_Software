@@ -10,6 +10,24 @@ export class InvalidTokenError extends Error {}
 
 const ROLES: readonly Role[] = ["PO", "PM", "DEV"];
 
+// Mesmas variações aceitas pelo BFF (app/core/security.py): o Módulo 1 pode nomear o
+// papel de outra forma (ex.: SCRUM_MASTER). Mantenha as duas listas em sincronia.
+const ROLE_ALIASES: Record<string, Role> = {
+  PO: "PO",
+  PRODUCT_OWNER: "PO",
+  PM: "PM",
+  SM: "PM",
+  SCRUM_MASTER: "PM",
+  DEV: "DEV",
+  DEVELOPER: "DEV",
+};
+
+export function normalizeRole(raw: unknown): Role | null {
+  if (typeof raw !== "string") return null;
+  const key = raw.trim().toUpperCase().replace(/[-\s]+/g, "_");
+  return ROLE_ALIASES[key] ?? null;
+}
+
 // JWT usa base64url (- e _ no lugar de + e /, sem padding); atob exige base64 comum.
 function decodeBase64Url(segment: string): string {
   const base64 = segment.replace(/-/g, "+").replace(/_/g, "/");
@@ -52,10 +70,9 @@ export function parseToken(raw: string, now: number = Date.now()): SessionUser {
     throw new InvalidTokenError("O token não tem a claim 'sub' (identificação do usuário).");
   }
 
-  if (typeof payload.role !== "string" || !ROLES.includes(payload.role as Role)) {
-    throw new InvalidTokenError(
-      `Papel inválido no token. Esperado um de: ${ROLES.join(", ")}.`,
-    );
+  const role = normalizeRole(payload.role);
+  if (role === null) {
+    throw new InvalidTokenError(`Papel inválido no token. Esperado um de: ${ROLES.join(", ")}.`);
   }
 
   const projects = payload.project_ids ?? [];
@@ -65,7 +82,7 @@ export function parseToken(raw: string, now: number = Date.now()): SessionUser {
 
   return {
     user_id: userId,
-    role: payload.role as Role,
+    role,
     project_ids: projects as string[],
   };
 }

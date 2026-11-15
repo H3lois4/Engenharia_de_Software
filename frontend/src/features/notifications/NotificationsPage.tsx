@@ -8,7 +8,8 @@ import { priorityLabel, sourceMeta } from "./meta";
 type StatusFilter = "all" | "unread" | "read";
 
 export function NotificationsPage() {
-  const { items, available, markRead, markAllRead, wsOpen } = useNotifications();
+  const { items, available, markRead, markAllRead, wsOpen, hasMore, loadingMore, loadMore } =
+    useNotifications();
   const [priority, setPriority] = useState<Priority | "all">("all");
   const [source, setSource] = useState<Source | "all">("all");
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -80,6 +81,17 @@ export function NotificationsPage() {
             <NotificationCard key={n.id} notification={n} onMarkRead={markRead} />
           ))}
         </div>
+      )}
+
+      {hasMore && (
+        <button
+          type="button"
+          onClick={() => void loadMore()}
+          disabled={loadingMore}
+          className="self-center rounded-md border border-primary px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-white disabled:opacity-60"
+        >
+          {loadingMore ? "Carregando…" : "Carregar mais"}
+        </button>
       )}
     </section>
   );

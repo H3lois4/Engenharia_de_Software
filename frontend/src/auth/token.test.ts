@@ -52,6 +52,22 @@ describe("parseToken", () => {
     expect(() => parseToken(makeToken(validPayload({ role: "ADMIN" })))).toThrow(/Papel inválido/);
   });
 
+  it.each([
+    ["SCRUM_MASTER", "PM"],
+    ["scrum-master", "PM"],
+    ["Scrum Master", "PM"],
+    ["SM", "PM"],
+    ["product_owner", "PO"],
+    ["dev", "DEV"],
+    ["Developer", "DEV"],
+  ])("normaliza o papel '%s' para %s", (emitido, esperado) => {
+    expect(parseToken(makeToken(validPayload({ role: emitido }))).role).toBe(esperado);
+  });
+
+  it.each(["", "   ", 42, null])("recusa papel inválido (%s)", (papel) => {
+    expect(() => parseToken(makeToken(validPayload({ role: papel })))).toThrow(/Papel inválido/);
+  });
+
   it("recusa token sem sub/user_id", () => {
     expect(() => parseToken(makeToken(validPayload({ sub: undefined })))).toThrow(/'sub'/);
   });

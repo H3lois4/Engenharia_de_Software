@@ -11,6 +11,10 @@ export interface NotificationsState {
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
   dismissToast: (id: string) => void;
+  /** Há mais páginas no servidor além das já carregadas. */
+  hasMore: boolean;
+  loadingMore: boolean;
+  loadMore: () => Promise<void>;
 }
 
 export const NotificationsContext = createContext<NotificationsState | null>(null);
