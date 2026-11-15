@@ -91,8 +91,11 @@ O Vite encaminha `/api` e `/ws` para o BFF em `localhost:8006` (ver `vite.config
 A tela inicial oferece duas formas de entrar:
 
 - **Token do Módulo 1:** cole o JWT no campo "Entrar com token". O portal confere formato, claims
-  (`sub`, `role` ∈ `PO`/`PM`/`DEV`, `project_ids`) e expiração, e o BFF valida a assinatura antes
-  de a sessão ser guardada. Um erro claro aparece se o token for recusado.
+  (`sub`, `role`, `project_ids`) e expiração, e o BFF valida a assinatura antes de a sessão ser
+  guardada. Um erro claro aparece se o token for recusado. O papel é normalizado para `PO`, `PM` ou
+  `DEV` e aceita variações como `SCRUM_MASTER`/`SM` (→ `PM`), `PRODUCT_OWNER` (→ `PO`) e
+  `DEVELOPER` (→ `DEV`), sem diferenciar maiúsculas. A lista fica em `backend/app/core/security.py`
+  e `frontend/src/auth/token.ts` (mantenha as duas em sincronia).
 - **Perfil de demonstração:** sem o Módulo 1 no ar, entre como Product Owner, Scrum Master ou
   Desenvolvedor. Os tokens de teste vêm de `GET /api/bff/dev/tokens`, disponível quando
   `APP_ENV=development` **ou** quando `ENABLE_DEV_LOGIN=true`.
@@ -214,9 +217,10 @@ cd frontend && npm run test
 
 - **BFF**: resiliência (timeout/breaker/cache), degradação graciosa do dashboard, auth e papéis,
   rotas de notificações e chat (incluindo estados de indisponibilidade e WebSocket).
-- **Front-end** (52 testes): leitura e validação do JWT (inclusive base64url), login por token,
-  sessão, seletor de projeto, reconexão do WebSocket com backoff exponencial, dashboard com falha
-  isolada por card e cache, prioridade → cor no card e estados de indisponibilidade.
+- **Front-end** (71 testes): leitura e validação do JWT (inclusive base64url e aliases de papel),
+  login por token, sessão, seletor de projeto, paginação das notificações, reconexão do WebSocket
+  com backoff exponencial, dashboard com falha isolada por card e cache, prioridade → cor no card
+  e estados de indisponibilidade.
 
 O pipeline de CI roda também `ruff` (BFF) e `eslint` + `tsc` (front-end), sem warnings.
 

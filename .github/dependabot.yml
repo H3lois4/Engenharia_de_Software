@@ -11,6 +11,10 @@ updates:
     labels:
       - "dependencies"
       - "backend"
+    # Mesmo critério do front: majors mudam contratos e podem quebrar o BFF.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   # Dependências JavaScript do portal
   - package-ecosystem: "npm"
@@ -36,3 +40,8 @@ updates:
     labels:
       - "dependencies"
       - "ci"
+    # Trocar a versão MAIOR de uma action altera o próprio pipeline de CI/CD e o deploy;
+    # isso deve ser feito de propósito, testando, e não por um PR automático.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
